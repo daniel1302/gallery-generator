@@ -5,11 +5,18 @@
 #include <iterator>
 
 #include "boost/filesystem.hpp"
-
+#include "yaml-cpp/yaml.h"
 
 #define INPUT_FILE_NAME "test.html"
 #define PARTIAL_TPL_PATH "templates/partial.html"
-#define DIRECTORY_PATH "/home/daniel/www/replace/test"
+#define INDEX_TPL_PATH "templates/index.html"
+#define DIRECTORY_PATH "test"
+#define CONFIG_FILENAME "config.yml"
+#define TPL_DIRECTORY "templates/"
+#define DEST_DIRECTORY "/var/www/html/gallery/"
+std::vector<std::string> filesToCopy{
+    "fluid-gallery.css"
+};
 
 
 namespace fs = boost::filesystem;
@@ -58,6 +65,23 @@ std::vector<std::string> getFiles(std::string path, const std::vector<std::strin
     return output;
 }
 
+YAML::Node readConfiguration(const std::string& fileName)
+{
+    return YAML::LoadFile(fileName); 
+}
+
+void copyFile(std::string& sourcePath, std::string& destPath) 
+{
+    std::ifstream source{sourcePath, std::ios::binary};
+    std::ofstream dest{destPath, std::ios::binary};
+
+    std::copy(
+        std::istreambuf_iterator<char>(source),
+        std::istreambuf_iterator<char>(),
+        std::ostreambuf_iterator<char>(dest)
+    );
+}
+
 int main()
 {
     // auto content = loadContent(INPUT_FILE_NAME);
@@ -66,7 +90,15 @@ int main()
 
     // std::cout<<content<<std::endl<<std::flush;
 
+    if (!fs::exists(DEST_DIRECTORY) || !fs::is_directory(DEST_DIRECTORY)) {
+        throw std::runtime_error{"Destination directory does not exists"};
+    }
 
+
+
+    readConfiguration(CONFIG_FILENAME);
+
+//    return 0;
     auto generateList = []() -> std::string {
         std::string result{};
 
@@ -77,10 +109,15 @@ int main()
         for (auto imagePath : images) {
             result = result + str_replace(partialContent, "{$filePath}", imagePath);
         }
-
+        
         return result;
     };
 
-    std::cout<<generateList();
+    std::string templateContent = loadContent(INDEX_TPL_PATH);
+    templateContent = str_replace(templateContent, "{$imagesList}", generateList()); 
 
+    
+
+
+    std::cout<<templateContent;
 }
