@@ -1,3 +1,13 @@
 #!/bin/bash
 
-g++ main.cpp -std=gnu++17 -o replace -lyaml-cpp -lboost_system -lboost_filesystem && ./replace
+g++ \
+    Config.hpp \
+    Config.cpp \
+    main.cpp \
+    -std=gnu++17 \
+    -o replace \
+        `Magick++-config --cxxflags --cppflags --ldflags --libs` \
+        -lyaml-cpp \
+        -lboost_system \
+        -lboost_filesystem \
+&& ./replace

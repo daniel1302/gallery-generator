@@ -1,3 +1,19 @@
-main:
-  name: Daniel
-  surname: Hornik
+template:
+  source_dir: ./templates
+  index_file: index.html
+  dest_dir: /var/www/html/gallery
+  template_files:
+    - fluid-gallery.css
+
+  thumbnails_dir: thumbnails
+  thumbnail_size:
+    width: 200
+    height: 200
+
+photo_source_dirs:
+  - /home/daniel/photos/ggg
+
+allowed_extensions:
+  - png
+  - jpeg
+  - jpg

@@ -3,9 +3,9 @@
 #include <vector>
 #include <tuple>
 #include <iterator>
-
+#include "Config.hpp"
 #include "boost/filesystem.hpp"
-#include "yaml-cpp/yaml.h"
+#include <Magick++.h>
 
 #define INPUT_FILE_NAME "test.html"
 #define PARTIAL_TPL_PATH "templates/partial.html"
@@ -19,7 +19,8 @@ std::vector<std::string> filesToCopy{
 };
 
 
-namespace fs = boost::filesystem;
+
+
 
 std::string str_replace(std::string str, const std::string& from, const std::string& to)
 {
@@ -52,25 +53,22 @@ bool isTypeFile(const std::string& filePath, const std::vector<std::string>& ext
     return false;
 }
 
-std::vector<std::string> getFiles(std::string path, const std::vector<std::string>& extensions={})
+std::vector<fs::path> getFiles(const std::vector<std::string>& paths, const std::vector<std::string>& extensions={})
 {
-    std::vector<std::string> output;
+    std::vector<fs::path> output;
 
-    for (auto& entry : fs::directory_iterator(path)) {
-        if (isTypeFile(entry.path().string(), extensions)) {
-            output.push_back(entry.path().string());
+    for (auto& path : paths) {
+        for (auto& entry : fs::directory_iterator(path)) {
+            if (isTypeFile(entry.path().string(), extensions)) {
+                output.push_back(entry.path());
+            }
         }
     }
 
     return output;
 }
 
-YAML::Node readConfiguration(const std::string& fileName)
-{
-    return YAML::LoadFile(fileName); 
-}
-
-void copyFile(std::string& sourcePath, std::string& destPath) 
+void copyFile(const std::string& sourcePath, const std::string& destPath)
 {
     std::ifstream source{sourcePath, std::ios::binary};
     std::ofstream dest{destPath, std::ios::binary};
@@ -82,42 +80,95 @@ void copyFile(std::string& sourcePath, std::string& destPath)
     );
 }
 
-int main()
+void writeFile(const std::string& destFile, const std::string& content)
 {
-    // auto content = loadContent(INPUT_FILE_NAME);
+    std::ofstream{destFile}<<content;
+}
 
-    // content = str_replace(content, "html", "Dupa");
+void scaleImage(const fs::path& path, const std::string& outDir, uint32_t w, uint32_t h)
+{
+    Magick::Image image;
 
-    // std::cout<<content<<std::endl<<std::flush;
+    image.read(path.string());
+    image.resize(Magick::Geometry{w, h});
 
-    if (!fs::exists(DEST_DIRECTORY) || !fs::is_directory(DEST_DIRECTORY)) {
-        throw std::runtime_error{"Destination directory does not exists"};
+    auto geometry = image.size();
+
+    if (geometry.width() < geometry.height()) {
+        int yOffset = (geometry.height()-geometry.width()) / 2;
+        geometry = Magick::Geometry{
+            geometry.width(),
+            geometry.width(),
+            0,
+            yOffset
+        };
+    } else {
+        int xOffset = ((geometry.width()-geometry.height()) / 2);
+        geometry = Magick::Geometry{
+            geometry.height(),
+            geometry.height(),
+            xOffset,
+            0
+        };
     }
 
+    image.crop(geometry);
 
+    image.write(outDir + "/" + path.filename().string());
+}
 
-    readConfiguration(CONFIG_FILENAME);
+void createThumbnails(const std::vector<fs::path>& images, const Config& conf)
+{
 
-//    return 0;
-    auto generateList = []() -> std::string {
+    for (auto& image : images) {
+        scaleImage(
+            image,
+            conf.getDestDir() + "/" + conf.getThumbnailsDir(),
+            conf.getThumbnailSize().width,
+            conf.getThumbnailSize().height
+        );
+    }
+
+}
+
+int main()
+{
+    Config conf{"config.yml"};
+
+    auto images = getFiles(conf.getPhotoSourceDirs(), {"png", "jpg"});
+
+    if (!fs::exists(conf.getDestDir() + "/" + conf.getThumbnailsDir())) {
+        fs::create_directory(conf.getDestDir() + "/" + conf.getThumbnailsDir());
+    }
+
+    createThumbnails(images, conf);
+
+    auto generateList = [&]() -> std::string {
         std::string result{};
 
-        auto images = getFiles(DIRECTORY_PATH, {"png", "jpg"});
         std::string partialContent = loadContent(PARTIAL_TPL_PATH);
 
-
-        for (auto imagePath : images) {
-            result = result + str_replace(partialContent, "{$filePath}", imagePath);
+        for (auto& imagePath : images) {
+            partialContent = str_replace(partialContent, "{$filePath}", imagePath.string());
+            result = result + str_replace(
+                partialContent,
+                "{$thumbnailPath}",
+                conf.getDestDir() + "/" + conf.getThumbnailsDir() + "/" + imagePath.filename().string()
+            );
         }
-        
+
         return result;
     };
 
     std::string templateContent = loadContent(INDEX_TPL_PATH);
-    templateContent = str_replace(templateContent, "{$imagesList}", generateList()); 
 
-    
+    templateContent = str_replace(templateContent, "{$imagesList}", generateList());
 
+    writeFile(conf.getDestDir()+"/index.html", templateContent);
 
-    std::cout<<templateContent;
+    for (auto& file : conf.getTemplateFiles()) {
+        copyFile(conf.getSourceDir() + "/" + file, conf.getDestDir() + "/" + file);
+    }
+
 }
+//dominikzaq
