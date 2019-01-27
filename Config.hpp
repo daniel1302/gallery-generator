@@ -30,24 +30,35 @@ private:
     YAML::Node config;
     std::string sourceDir;
     std::string indexFile;
+    std::string title;
+    std::string description;
+    std::string partialFile;
     std::string destDir;
     std::string thumbnailsDir;
     std::vector<std::string> templateFiles{};
     std::vector<std::string> photoSourceDirs{};
     std::vector<std::string> allowedExtensions{};
     ImageSize thumbnailSize{};
+    bool thumbnailEnabled = false;
+    bool thumbnailCrop = false;
 
 public:
+    Config();
     Config(const std::string& filePath);
 
     std::string getSourceDir() const;
     std::string getIndexFile() const;
+    std::string getTitle() const;
+    std::string getDescription() const;
+    std::string getPartialFile() const;
     std::string getDestDir() const;
     std::string getThumbnailsDir() const;
     std::vector<std::string> getTemplateFiles() const;
     std::vector<std::string> getPhotoSourceDirs() const;
     std::vector<std::string> getAllowedExtensions() const;
     ImageSize getThumbnailSize() const;
+    bool getThumbnailEnabled() const;
+    bool getThumbnailCrop() const;
 };
 
 #endif

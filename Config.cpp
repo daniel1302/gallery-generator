@@ -1,5 +1,7 @@
 #include "Config.hpp"
 
+#include <iostream>
+
 
 Config::Config(const std::string& filePath)
 {
@@ -28,13 +30,19 @@ void Config::parseConfigFile()
 
     sourceDir = config["template"]["source_dir"].as<std::string>();
     indexFile = config["template"]["index_file"].as<std::string>();
+    title = config["template"]["title"].as<std::string>();
+    description = config["template"]["description"].as<std::string>();
+    partialFile = config["template"]["partial_file"].as<std::string>();
     destDir = config["template"]["dest_dir"].as<std::string>();
-    thumbnailsDir = config["template"]["thumbnails_dir"].as<std::string>();
+    thumbnailsDir = config["thumbnails"]["dir"].as<std::string>();
+    thumbnailEnabled = config["thumbnails"]["enabled"].as<bool>();
+    thumbnailCrop = config["thumbnails"]["crop"].as<bool>();
 
     thumbnailSize = Config::ImageSize{
-        config["template"]["thumbnail_size"]["width"].as<uint32_t>(),
-        config["template"]["thumbnail_size"]["height"].as<uint32_t>()
+        config["thumbnails"]["size"]["width"].as<uint32_t>(),
+        config["thumbnails"]["size"]["height"].as<uint32_t>()
     };
+
 
 
     appendSequence(templateFiles, config["template"]["template_files"]);
@@ -64,6 +72,7 @@ void Config::validateConfigs()
 
     validateFileExisting(sourceDir);
     validateFileExisting(sourceDir + "/" + indexFile);
+    validateFileExisting(sourceDir + "/" + partialFile);
 
     for (auto& file : templateFiles) {
         validateFileExisting(sourceDir + "/" + file);
@@ -87,6 +96,21 @@ std::string Config::getSourceDir() const
 std::string Config::getIndexFile() const
 {
     return indexFile;
+}
+
+std::string Config::getTitle() const
+{
+    return title;
+}
+
+std::string Config::getDescription() const
+{
+    return description;
+}
+
+std::string Config::getPartialFile() const
+{
+    return partialFile;
 }
 
 std::string Config::getDestDir() const
@@ -117,4 +141,14 @@ std::vector<std::string> Config::getAllowedExtensions() const
 Config::ImageSize Config::getThumbnailSize() const
 {
     return thumbnailSize;
+}
+
+bool Config::getThumbnailEnabled() const
+{
+    return thumbnailEnabled;
+}
+
+bool Config::getThumbnailCrop() const
+{
+    return thumbnailCrop;
 }

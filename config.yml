@@ -1,14 +1,20 @@
 template:
+  title: Four waterfall path
+  description: ""
   source_dir: ./templates
   index_file: index.html
+  partial_file: partial.html
   dest_dir: /var/www/html/gallery
   template_files:
     - fluid-gallery.css
 
-  thumbnails_dir: thumbnails
-  thumbnail_size:
-    width: 200
-    height: 200
+thumbnails:
+  enabled: true
+  crop: true
+  dir: thumbnails
+  size:
+    width: 400
+    height: 400
 
 photo_source_dirs:
   - /home/daniel/photos/ggg
