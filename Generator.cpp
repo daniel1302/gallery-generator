@@ -4,6 +4,7 @@
 Generator::Generator(const std::string configPath)
     : config(Config{configPath})
 {
+    Magick::InitializeMagick("");
 }
 
 void Generator::generate()
@@ -53,7 +54,7 @@ void Generator::scaleAndCropImage(const fs::path& path)
         auto geometry = image.size();
 
         if (geometry.width() < geometry.height()) {
-            int yOffset = (geometry.height()-geometry.width()) / 2;
+            uint32_t yOffset = (geometry.height()-geometry.width()) / 2;
             geometry = Magick::Geometry{
                 geometry.width(),
                 geometry.width(),
@@ -61,7 +62,7 @@ void Generator::scaleAndCropImage(const fs::path& path)
                 yOffset
             };
         } else {
-            int xOffset = ((geometry.width()-geometry.height()) / 2);
+            uint32_t xOffset = ((geometry.width()-geometry.height()) / 2);
             geometry = Magick::Geometry{
                 geometry.height(),
                 geometry.height(),

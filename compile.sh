@@ -8,7 +8,7 @@ g++ \
     main.cpp \
     -std=gnu++17 \
     -o replace \
-        `Magick++-config --cxxflags --cppflags --ldflags --libs` \
+        `Magick++-config --cppflags --cxxflags --ldflags --libs` \
         -lyaml-cpp \
         -lboost_system \
         -lboost_filesystem \
